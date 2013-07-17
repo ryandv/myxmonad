@@ -1,0 +1,4 @@
+myxmonad
+========
+
+My XMonad configuration.
