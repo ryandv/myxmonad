@@ -14,15 +14,20 @@ import XMonad.Layout.PerWorkspace
 
 import XMonad.Actions.NoBorders
 
+import XMonad.Util.Run
+
 import Graphics.X11.ExtraTypes.XF86
+
+import System.FilePath.Posix
+import System.IO
 
 --------------------------------------------------------------------------------
 -- CONFIG VARIABLES
 --------------------------------------------------------------------------------
-conf_modMask		= mod4Mask
-conf_terminal		= "urxvt -tr -sh 10 +sb -fg white -bg black -sl 10000"
-conf_focusedBorderColor	= "#00A6FF"
-conf_workspaces		= ["web", "code", "mon"] ++ map show [4..9]
+myModMask		= mod4Mask
+myTerminal		= "urxvt -tr -sh 10 +sb -fg white -bg black -sl 10000"
+myFocusedBorderColor	= "#00A6FF"
+myWorkspaces		= ["web", "code", "mon"] ++ map show [4..9]
 
 
 ------------------------------------------------------------
@@ -32,11 +37,13 @@ conf_workspaces		= ["web", "code", "mon"] ++ map show [4..9]
 keys_volinc	= ((0,xF86XK_AudioRaiseVolume),	spawn "amixer -q set Master 5%+ unmute")
 keys_voldec	= ((0,xF86XK_AudioLowerVolume),	spawn "amixer -q set Master 5%- unmute")
 keys_mute	= ((0,xF86XK_AudioMute),	spawn "amixer -q set Speaker toggle")
+keys_restart	= ((myModMask,xK_q),		spawn "killall conky dzen2 dzenmon.pl && xmonad --recompile && xmonad --restart")
 
 myKeys _	= M.fromList
 	[ keys_volinc
 	, keys_voldec
 	, keys_mute
+	, keys_restart
 	]
 
 ------------------------------------------------------------
@@ -59,20 +66,21 @@ myManageHook	= composeAll
 -- LAYOUT
 ------------------------------------------------------------
 
-myLayoutHook	= smartBorders (tiled ||| Mirror tiled ||| Full)
+myLayoutHook	= avoidStruts( smartBorders (tiled ||| Mirror tiled ||| Full) )
 	where
 		tiled	= Tall nmaster delta ratio
 		nmaster	= 1
 		ratio	= 1/2
 		delta	= 3/100
 
-myConfig	= defaultConfig {
-	modMask			= conf_modMask,
-	terminal		= conf_terminal,
-	focusedBorderColor	= conf_focusedBorderColor,
-	workspaces		= conf_workspaces,
+myConfig h	= defaultConfig {
+	modMask			= myModMask,
+	terminal		= myTerminal,
+	focusedBorderColor	= myFocusedBorderColor,
+	workspaces		= myWorkspaces,
 	keys			= \c -> myKeys c `M.union` keys defaultConfig c,
 	manageHook		= myManageHook <+> manageHook defaultConfig,
+	logHook			= dynamicLogWithPP $ dzenPP { ppOutput = hPutStrLn h },
 	layoutHook		= myLayoutHook
 }
 
@@ -86,10 +94,14 @@ keybind_toggle_dzen	:: (XConfig Layout -> (KeyMask, KeySym))
 keybind_toggle_dzen _	= (mod4Mask, xK_b)
 
 -- XMonad dzen2
---main	= xmonad =<< dzen myConfig
+--main	= xmonad =<< dzen myConfig 
 
 -- My dzen2
 --main = xmonad =<< statusBar "echo 'Hello world' | dzen2 -fg grey -ta l -p 5" defaultPP keybind_toggle_dzen myConfig
+main = (spawnPipe "~/.xmonad/dzenmon.pl")
+	>>= \h -> xmonad $ myConfig h
+
+--main	= (spawnPipe "dzen2") >>= \h -> xmonad $ myConfig h
 
 -- No dzen2
 --main = xmonad myConfig
