@@ -1,3 +1,4 @@
+{-# LANGUAGE NoMonomorphismRestriction #-}
 import XMonad
 
 import qualified Data.Map as M
@@ -13,6 +14,7 @@ import XMonad.Layout.NoBorders
 import XMonad.Layout.PerWorkspace
 
 import XMonad.Actions.NoBorders
+import XMonad.Actions.GridSelect
 
 import XMonad.Util.Run
 
@@ -38,12 +40,14 @@ keys_volinc	= ((0,xF86XK_AudioRaiseVolume),	spawn "amixer -q set Master 5%+ unmu
 keys_voldec	= ((0,xF86XK_AudioLowerVolume),	spawn "amixer -q set Master 5%- unmute")
 keys_mute	= ((0,xF86XK_AudioMute),	spawn "amixer -q set Speaker toggle")
 keys_restart	= ((myModMask,xK_q),		spawn "killall conky dzen2 dzenmon.pl && xmonad --recompile && xmonad --restart")
+keys_gridselect = ((myModMask,xK_g),		goToSelected $ myGSConfig myColorizer)
 
 myKeys _	= M.fromList
 	[ keys_volinc
 	, keys_voldec
 	, keys_mute
 	, keys_restart
+	, keys_gridselect
 	]
 
 ------------------------------------------------------------
@@ -84,7 +88,18 @@ myConfig h	= defaultConfig {
 	layoutHook		= myLayoutHook
 }
 
---------------------------------------------------------------------------------
+
+------------------------------------------------------------
+-- GRIDSELECT
+------------------------------------------------------------
+
+myGSConfig col	= buildDefaultGSConfig col
+myColorizer	= colorRangeFromClassName
+			minBound
+			(0x46,0x71,0xD5)
+			minBound
+			(0xB5,0xB5,0xB5)
+			(0xFF,0xFF,0xFF)
 
 --------------------------------------------------------------------------------
 -- Some basic functions 
